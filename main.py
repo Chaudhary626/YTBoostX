@@ -55,10 +55,15 @@ async def main():
     # Run the bot with aiohttp web server
     # Run the bot with aiohttp web server
     async def telegram_webhook(request):
-        update = Update.de_json(await request.json(), application.bot)
-        logger.info(f"🔔 Received update: {update}")
+    try:
+        data = await request.json()
+        logger.info(f"🔔 Webhook triggered with data: {data}")
+        update = Update.de_json(data, application.bot)
         await application.process_update(update)
         return web.Response()
+    except Exception as e:
+        logger.exception("🚨 Webhook Error")
+        return web.Response(status=500, text="Webhook failed: " + str(e))
 
     async def webhook_ping(request):  # <-- This handles GET /telegram
         return web.Response(text="Webhook is alive!")
