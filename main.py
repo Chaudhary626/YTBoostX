@@ -4,7 +4,7 @@ import logging
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-import aiohttp
+from aiohttp import web  # <-- CHANGE 1: Corrected import
 
 import database as db
 import handlers
@@ -31,7 +31,6 @@ async def main():
         upi_id_from_env = os.environ.get("UPI_ID", "your-upi@bank")
         await db.set_setting('upi_id', upi_id_from_env)
 
-
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(BOT_TOKEN).build()
 
@@ -50,7 +49,6 @@ async def main():
     # Callback Query Handler
     application.add_handler(CallbackQueryHandler(handlers.payment_callback, pattern='^(approve_|reject_)'))
 
-
     # Set up webhook
     await application.bot.set_webhook(url=f"{WEBHOOK_URL}/telegram")
 
@@ -58,14 +56,14 @@ async def main():
     async def telegram_webhook(request):
         update = Update.de_json(await request.json(), application.bot)
         await application.process_update(update)
-        return aiohttp.web.Response()
+        return web.Response() # <-- CHANGE 2: Using the direct 'web' import
 
-    app = aiohttp.web.Application()
+    app = web.Application() # <-- CHANGE 2: Using the direct 'web' import
     app.router.add_post("/telegram", telegram_webhook)
 
-    runner = aiohttp.web.AppRunner(app)
+    runner = web.AppRunner(app) # <-- CHANGE 2: Using the direct 'web' import
     await runner.setup()
-    site = aiohttp.web.TCPSite(runner, '0.0.0.0', PORT)
+    site = web.TCPSite(runner, '0.0.0.0', PORT) # <-- CHANGE 2: Using the direct 'web' import
     logger.info(f"Starting web server on port {PORT}")
     await site.start()
 
@@ -74,4 +72,6 @@ async def main():
         await asyncio.sleep(3600)
 
 if __name__ == '__main__':
+    # Ensure database is initialized before running the main async loop
+    asyncio.run(db.init_db())
     asyncio.run(main())
