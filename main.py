@@ -54,11 +54,13 @@ async def main():
 
     # Run the bot with aiohttp web server
     async def telegram_webhook(request):
-        update = Update.de_json(await request.json(), application.bot)
-        await application.process_update(update)
-        return web.Response() # <-- CHANGE 2: Using the direct 'web' import
+    update = Update.de_json(await request.json(), application.bot)
+    logger.info(f"🔔 Received update: {update}")
+    await application.process_update(update)
+    return web.Response()# <-- CHANGE 2: Using the direct 'web' import
 
-    app = web.Application() # <-- CHANGE 2: Using the direct 'web' import
+    app = web.Application()# <-- CHANGE 2: Using the direct 'web' import
+    app.router.add_post("/telegram", telegram_webhook)
     app.router.add_post("/telegram", telegram_webhook)
 
     runner = web.AppRunner(app) # <-- CHANGE 2: Using the direct 'web' import
