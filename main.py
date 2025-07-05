@@ -53,23 +53,27 @@ async def main():
     await application.bot.set_webhook(url=f"{WEBHOOK_URL}/telegram")
 
     # Run the bot with aiohttp web server
+    # Run the bot with aiohttp web server
     async def telegram_webhook(request):
-    update = Update.de_json(await request.json(), application.bot)
-    logger.info(f"🔔 Received update: {update}")
-    await application.process_update(update)
-    return web.Response()# <-- CHANGE 2: Using the direct 'web' import
+        update = Update.de_json(await request.json(), application.bot)
+        logger.info(f"🔔 Received update: {update}")
+        await application.process_update(update)
+        return web.Response()
 
-    app = web.Application()# <-- CHANGE 2: Using the direct 'web' import
-    app.router.add_post("/telegram", telegram_webhook)
-    app.router.add_post("/telegram", telegram_webhook)
+    async def webhook_ping(request):  # <-- This handles GET /telegram
+        return web.Response(text="Webhook is alive!")
 
-    runner = web.AppRunner(app) # <-- CHANGE 2: Using the direct 'web' import
+    app = web.Application()
+    app.router.add_get("/telegram", webhook_ping)  # <-- Add this GET route
+    app.router.add_post("/telegram", telegram_webhook)  # <-- Existing POST route
+
+    runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', PORT) # <-- CHANGE 2: Using the direct 'web' import
-    logger.info(f"Starting web server on port {PORT}")
+    site = web.TCPSite(runner, '0.0.0.0', PORT)
+    logger.info(f"🚀 Starting web server on port {PORT}")
     await site.start()
 
-    # Keep the script running
+    # Keep the bot running
     while True:
         await asyncio.sleep(3600)
 
